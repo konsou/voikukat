@@ -7,4 +7,5 @@ import pygame
 # Groupit
 plot_group = pygame.sprite.Group()
 flower_group = pygame.sprite.Group()
+seed_group = pygame.sprite.Group()
 ui_group = pygame.sprite.Group()

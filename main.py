@@ -72,7 +72,8 @@ class Program(object):
             self.flowers_dict[x] = {}
             for y in range(Settings.plots_y):
                 self.plots_dict[x][y] = plot.Plot(x=x, y=y, main=self)
-                self.flowers_dict[x][y] = flower.Flower(x=x, y=y, plot=self.plots_dict[x][y], initial_spawn=1, main=self)
+                # self.flowers_dict[x][y] = flower.Flower(x=x, y=y, plot=self.plots_dict[x][y], initial_spawn=1, main=self)
+                self.flowers_dict[x][y] = None
 
     def update(self):
         """
@@ -84,6 +85,7 @@ class Program(object):
         # sprite-groupien piirrot ruudulle
         groups.plot_group.draw(self.disp_surf)
         groups.flower_group.draw(self.disp_surf)
+        groups.seed_group.draw(self.disp_surf)
         groups.ui_group.draw(self.disp_surf)
 
         pygame.display.flip()
@@ -99,6 +101,9 @@ class Program(object):
                     self.running = 0
                 elif event.key == K_SPACE:
                     self.pause()
+                elif event.key == K_RETURN:
+                    if self.paused:
+                        self.advance_turn()
                 elif event.key == K_PLUS or event.key == K_KP_PLUS:
                     pass
                 elif event.key == K_MINUS or event.key == K_KP_MINUS:
@@ -129,6 +134,7 @@ class Program(object):
         """
         groups.plot_group.update()
         groups.flower_group.update()
+        groups.seed_group.update()
 
         self.turn_counter += 1
 

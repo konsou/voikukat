@@ -3,6 +3,7 @@
 import pygame
 import groups
 import flower
+import seed
 from settings import *
 from colors import *
 
@@ -31,11 +32,13 @@ class Plot(pygame.sprite.Sprite):
         self.mouse_is_over = 0
 
         self.flower = None
+        self.seeds = []
 
     def update(self):
-        if self.flower is None:
-            self.flower = flower.Flower(self.x, self.y, plot=self, main=self.main)
-            self.main.flowers_dict[self.x][self.y] = self.flower
+        pass
+        # if self.flower is None:
+        #     self.flower = flower.Flower(self.x, self.y, plot=self, main=self.main)
+        #     self.main.flowers_dict[self.x][self.y] = self.flower
 
     def update_image(self):
         self.image = pygame.Surface((self.width, self.height))
@@ -58,12 +61,11 @@ class Plot(pygame.sprite.Sprite):
     def handle_mouse_click(self, event):
         """
         Ottaa vastaan pygamen mouse click -eventin.
-        Jos klikataan soluun hiiren ykkösnapilla niin nostetaan solun lämpötilaa 50 asteella
-        Jos klikataan soluun hiiren kakkosnapilla niin lasketaan solun lämpötilaa 50 asteella
+        Luo seedin
         """
         if self.rect.collidepoint(event.pos):
             if event.button == 1:
-                pass
+                seed.Seed(self.x, self.y, main=self.main)
             elif event.button == 3:
                 pass
 

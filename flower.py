@@ -8,6 +8,7 @@ class Flower - kukkien yleisobjekti
 import pygame
 import groups
 import random
+import seed
 from pygame.locals import *
 from settings import *
 from colors import *
@@ -15,42 +16,45 @@ from colors import *
 
 class Flower(pygame.sprite.Sprite):
     class State(object):
-        GROWING, FLOWER, SEED, WITHERING = range(4)
+        GROWING, FLOWER, SEED_POD, WITHERING = range(4)
         STALK_COLOR = [GREEN, (40, 230, 10), (80, 180, 20), BROWN]
     """
     """
-    def __init__(self, x, y, plot=None, main=None, initial_spawn=0):
+    def __init__(self, x, y, parent=None, plot=None, main=None, initial_spawn=0):
         pygame.sprite.Sprite.__init__(self, groups.flower_group)
+        # if Settings.DEBUG_TEXT: print "Spawning a flower..."
 
+        # Paikka ruudukossa
+        self.x = x
+        self.y = y
+
+        # GENOMI
+        if parent is not None:
+            self.genome = parent.genome.copy()
+            self.life_counter = 0
+        else:
+            # Jos ei ole vanhempaa niin on initial spawnia - silloin luetaan asetuksista alkuarvot
+            self.genome = Settings.flower_default_genome.copy()
+            # Randomoidaan elinaika
+            self.life_counter = random.randint(0, self.genome['lifetime'] - 1)
+
+        # if Settings.DEBUG_TEXT: print "Genome:\n{}".format(self.genome)
         # Viittaukset maailmaan ja soluun
+        self.parent = parent
         self.plot = plot
         self.main = main
 
         # Tärkeä - asetettaa solun kukaksi itsensä
         self.plot.flower = self
 
-        # Väri, albedo, radiation, suosittu lämpötila - nämä tarkoitus overrideta
+        # Väri
         self.color = GREEN
 
-        # Elinikä
-        self.lifetime = Settings.flower_lifetime
-        # Jos alkuspawnaus niin randomoidaan kukan ikä
-        if initial_spawn:
-            self.life_counter = random.randint(0, self.lifetime - 1)
-        else:
-            self.life_counter = 0
-
         # Ominaisuudet
-        self.lifetime = Settings.flower_lifetime
-        self.growth_per_turn = Settings.flower_growth_per_turn
-        self.flower_after_turns = Settings.flower_growth_duration
-        self.flower_duration = Settings.flower_flower_duration
-        self.seeds_grow_time = Settings.flower_seeds_grow_time
-        self.seeds_number = Settings.flower_seeds_number
-
         self.stalk_width = 1  # update_image laskee tämän uusiksi iän mukaan
 
         self.state = None
+        self.seeds_sprouted = 0
         self.update_state()
 
         self.height = self.life_counter
@@ -60,9 +64,6 @@ class Flower(pygame.sprite.Sprite):
         self.rect = None
         self.update_image()
 
-        # Paikka ruudukossa
-        self.x = x
-        self.y = y
 
     def update_image(self):
         """ Päivittää kuvan ja rectin """
@@ -81,17 +82,17 @@ class Flower(pygame.sprite.Sprite):
         pygame.draw.line(self.image, self.color, stalk_bottom, stalk_top, self.stalk_width)
         if self.state == Flower.State.FLOWER:
             pygame.draw.circle(self.image, YELLOW, stalk_top, 5)
-        elif self.state == Flower.State.SEED:
+        elif self.state == Flower.State.SEED_POD:
             pygame.draw.circle(self.image, BROWN, stalk_top, 5)
         self.rect.midbottom = self.plot.rect.midbottom[0], self.plot.rect.midbottom[1] - Settings.plot_height
 
     def update_state(self):
-        if self.life_counter < self.flower_after_turns:
+        if self.life_counter < self.genome['growth_duration']:
             self.state = Flower.State.GROWING
-        elif self.life_counter < self.flower_after_turns + self.flower_duration:
+        elif self.life_counter < self.genome['growth_duration'] + self.genome['flower_duration']:
             self.state = Flower.State.FLOWER
-        elif self.life_counter < self.flower_after_turns + self.flower_duration + self.seeds_grow_time:
-            self.state = Flower.State.SEED
+        elif self.life_counter < self.genome['growth_duration'] + self.genome['flower_duration'] + self.genome['seeds_grow_time']:
+            self.state = Flower.State.SEED_POD
         else:
             self.state = Flower.State.WITHERING
 
@@ -114,12 +115,31 @@ class Flower(pygame.sprite.Sprite):
         # temp_diff = float(abs(self.world.cells_dict[self.x][self.y].temp - self.preferred_temp))
         self.life_counter += 1
         self.update_state()
+
         if self.state == Flower.State.GROWING:
             self.grow(1)
-        if self.life_counter >= self.lifetime:
+
+        if self.state == Flower.State.WITHERING and not self.seeds_sprouted:
+            self.sprout_seeds()
+
+        if self.life_counter >= self.genome['lifetime']:
             self.kill()
         else:
             self.update_image()
 
     def grow(self, amount):
         self.height += amount
+
+    def sprout_seeds(self):
+        for i in range(int(self.genome['seeds_number'])):
+            new_x = random.randint(int(self.x - self.genome['seeds_distance']),
+                                   int(self.x + self.genome['seeds_distance']))
+            new_y = random.randint(int(self.y - self.genome['seeds_distance']),
+                                   int(self.y + self.genome['seeds_distance']))
+
+            try:
+                seed.Seed(new_x, new_y, parent=self, main=self.main)
+            except KeyError:
+                print "Couldn't sprout seeds outside grid: {}, {}".format(new_x, new_y)
+                pass
+
