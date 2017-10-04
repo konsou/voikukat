@@ -43,7 +43,7 @@ class Program(object):
 
         # pause
         self.paused = 0
-        self.paused_text = text.Text(group=groups.ui_group, pos=(20, Settings.window_size[1] - 10), font_size=40, text="PAUSED", align='bottomleft', visible=0)
+        self.paused_text = text.Text(group=groups.ui_group, pos=(Settings.window_center_point[0], Settings.window_size[1] - 10), font_size=40, text="PAUSED", align='midbottom', visible=0)
 
         self.turn_counter = 0
 
@@ -51,12 +51,16 @@ class Program(object):
         self.hover_plot = None
 
         # infotekstit
-        self.turn_text = text.Text(group=groups.ui_group, pos=(30, 30), text="Turn 0", font_size=40, align='topleft')
-        self.info_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 30, 10), text="(info)", font_size=40, align='topright')
-        self.avg_temp_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 30, 50), text="(avg tmp)", font_size=40, align='topright')
-        self.black_counter_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 40, Settings.window_size[1] - 50), text="Black", font_size=40, align='bottomright')
-        self.white_counter_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 40, Settings.window_size[1] - 10), text="White", font_size=40, align='bottomright')
-        # self.sun_power_text = text.Text(group=groups.ui_group, pos=(20, Settings.window_size[1] - 10), text="Sun power: {}".format(Settings.sun_power), font_size=40, align='bottomleft')
+        self.turn_text = text.Text(group=groups.ui_group, pos=(30, 10), text="Turn 0", align='topleft')
+        self.info_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 30, 10), text="(info)", align='topright')
+        self.info_text2 = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 30, 40), text="(info2)", align='topright')
+        self.info_text3 = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 30, 70), text="(info3)", align='topright')
+        self.info_text4 = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 30, 100), text="(info4)", align='topright')
+        # self.avg_temp_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 30, 50), text="(avg tmp)", align='topright')
+        self.flowers_counter_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 40, Settings.window_size[1] - 50), text="(flowers)", align='bottomright')
+        self.seeds_counter_text = text.Text(group=groups.ui_group, pos=(Settings.window_size[0] - 40, Settings.window_size[1] - 10), text="(seeds)", align='bottomright')
+        self.avg_lifetime_text = text.Text(group=groups.ui_group, pos=(20, Settings.window_size[1] - 40), text="(lifetime)", align='bottomleft')
+        self.avg_max_height_text = text.Text(group=groups.ui_group, pos=(20, Settings.window_size[1] - 10), text="(max height)", align='bottomleft')
 
         # Statsit
         self.stats_avg_temp = {}
@@ -104,6 +108,8 @@ class Program(object):
                 elif event.key == K_RETURN:
                     if self.paused:
                         self.advance_turn()
+                elif event.key == K_RCTRL or event.key == K_LCTRL:
+                    self.lawnmower()
                 elif event.key == K_PLUS or event.key == K_KP_PLUS:
                     pass
                 elif event.key == K_MINUS or event.key == K_KP_MINUS:
@@ -127,6 +133,10 @@ class Program(object):
             if pygame.time.get_ticks() - self.last_turn_started_at >= Settings.turn_time_seconds * 1000:
                 self.advance_turn()
 
+    def lawnmower(self):
+        for spr in groups.flower_group:
+            spr.cut_down(Settings.lawnmower_height)
+
     def advance_turn(self):
         """
         Siirtää simulaation seuraavaan vuoroon. Käytännössä lähettää tästä vain tiedon world-objektille, joka
@@ -141,9 +151,10 @@ class Program(object):
         # Päivitetään infotekstit
         self.turn_text.text = "Turn {}".format(self.turn_counter)
         # self.avg_temp_text.text = "Avg temp: {}".format(round(avg_temp, 2))
-        # self.black_counter_text.text = "Black: {}".format(black_flowers)
-        # self.white_counter_text.text = "White: {}".format(white_flowers)
-        # self.sun_power_text.text = "Sun power: {}".format(Settings.sun_power)
+        self.flowers_counter_text.text = "Flowers: {}".format(len(groups.flower_group))
+        self.seeds_counter_text.text = "Seeds: {}".format(len(groups.seed_group))
+        self.avg_lifetime_text.text = "Avg lifetime: {}".format(groups.flower_group.get_avg_lifetime())
+        self.avg_max_height_text.text = "Avg max height: {}".format(groups.flower_group.get_avg_max_height())
 
         # Turn counterin timerin nollaus
         self.last_turn_started_at = pygame.time.get_ticks()
@@ -152,9 +163,29 @@ class Program(object):
         """ Päivittää sen infotekstin, joka kertoo hoveratun cellin tiedot """
         if self.hover_plot is not None and self.hover_plot.flower is not None:
             update_text = "height: {}, life: {}".format(self.hover_plot.flower.height, self.hover_plot.flower.life_counter)
+            update_text2 = "seed_lifetime: {}, lifetime: {}, growth_per_turn: {}, growth_duration: {}".format(
+                round(self.hover_plot.flower.genome['seed_lifetime'], 2),
+                round(self.hover_plot.flower.genome['lifetime'], 2),
+                round(self.hover_plot.flower.genome['growth_per_turn'], 2),
+                round(self.hover_plot.flower.genome['growth_duration'], 2))
+            update_text3 = "flower_duration: {}, seeds_grow_time: {}, seeds_distance: {}, seeds_number: {}".format(
+                round(self.hover_plot.flower.genome['flower_duration'], 2),
+                round(self.hover_plot.flower.genome['seeds_grow_time'], 2),
+                round(self.hover_plot.flower.genome['seeds_distance'], 2),
+                round(self.hover_plot.flower.genome['seeds_number'], 2))
+            update_text4 = "energy: {}, energy_storage: {}".format(
+                round(self.hover_plot.flower.energy, 2),
+                round(self.hover_plot.flower.energy_storage, 2))
         else:
             update_text = ""
+            update_text2 = ""
+            update_text3 = ""
+            update_text4 = ""
+
         self.info_text.text = update_text
+        self.info_text2.text = update_text2
+        self.info_text3.text = update_text3
+        self.info_text4.text = update_text4
 
     def pause(self):
         if self.paused:
