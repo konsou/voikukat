@@ -21,7 +21,10 @@ class CustomGroup(pygame.sprite.Group):
         lifetime_list = []
         for spr in self.sprites():
             lifetime_list.append(spr.genome['lifetime'])
-        return numpy.mean(lifetime_list)
+        try:
+            return numpy.mean(lifetime_list)
+        except RuntimeWarning:
+            return 0
 
 
 # Groupit

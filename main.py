@@ -46,6 +46,7 @@ class Program(object):
         self.paused_text = text.Text(group=groups.ui_group, pos=(Settings.window_center_point[0], Settings.window_size[1] - 10), font_size=40, text="PAUSED", align='midbottom', visible=0)
 
         self.turn_counter = 0
+        self.lawnmower_every_x_turns = 50
 
         # hover_plot on se solu, jonka päällä hiiri on
         self.hover_plot = None
@@ -147,6 +148,9 @@ class Program(object):
         groups.seed_group.update()
 
         self.turn_counter += 1
+
+        if self.turn_counter % self.lawnmower_every_x_turns == 0:
+            self.lawnmower()
 
         # Päivitetään infotekstit
         self.turn_text.text = "Turn {}".format(self.turn_counter)

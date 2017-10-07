@@ -10,6 +10,7 @@ from settings import *
 
 # TODO: Siemenellä pitää olla energiavaranto jonka spawnaava kukka perii
 
+
 class Seed(pygame.sprite.Sprite):
     def __init__(self, x, y, parent=None, main=None, initial_spawn=0):
         # if Settings.DEBUG_TEXT: print "Spawning seed at coordinates: x: {}, y: {}".format(x, y)
@@ -37,6 +38,8 @@ class Seed(pygame.sprite.Sprite):
             if parent is not None:
                 # Kopioidaan vanhemman genomi
                 self.genome = parent.genome.copy()
+                # Siemenen energiavaranto
+                self.energy = parent.genome['energy_cost_per_seed']
                 # Mutatoidaan sitä
                 self.mutate_genome()
                 self.life_counter = 0
@@ -45,6 +48,8 @@ class Seed(pygame.sprite.Sprite):
                 self.genome = Settings.flower_default_genome.copy()
                 # Randomoidaan elinaika
                 self.life_counter = random.randint(0, self.genome['seed_lifetime'] - 1)
+                # Siemenen energiavaranto
+                self.energy = self.genome['energy_cost_per_seed']
 
             # Tärkeä - lisäää soluun itsensä
             self.plot.seeds.append(self)

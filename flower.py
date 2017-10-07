@@ -31,11 +31,15 @@ class Flower(pygame.sprite.Sprite):
         if parent is not None:
             self.genome = parent.genome.copy()
             self.life_counter = 0
+            # Base energy
+            self._base_energy = parent.energy
         else:
             # Jos ei ole vanhempaa niin on initial spawnia - silloin luetaan asetuksista alkuarvot
             self.genome = Settings.flower_default_genome.copy()
             # Randomoidaan elinaika
             self.life_counter = random.randint(0, self.genome['lifetime'] - 1)
+            # Base energy
+            self._base_energy = self.genome['energy_cost_per_seed']
 
         # if Settings.DEBUG_TEXT: print "Genome:\n{}".format(self.genome)
         # Viittaukset maailmaan ja soluun
@@ -50,7 +54,7 @@ class Flower(pygame.sprite.Sprite):
         self.color = GREEN
 
         # Ominaisuudet
-        self._energy = 0
+        self._energy = self._base_energy
 
         self.stalk_width = 1  # update_image laskee tämän uusiksi iän mukaan
 
@@ -205,7 +209,7 @@ class Flower(pygame.sprite.Sprite):
         self._energy = min(value, self.energy_storage)
 
     def _get_energy_storage(self):
-        return self.height * self.genome['energy_storage_per_height']
+        return self.height * self.genome['energy_storage_per_height'] + self._base_energy
 
     energy = property(_get_energy, _set_energy)
     energy_storage = property(_get_energy_storage)
